@@ -1,0 +1,7 @@
+tips.*
+
+__pycache__/
+
+_ckpt/**/
+_data/**/
+_logs/**/
