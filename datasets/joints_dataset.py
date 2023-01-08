@@ -5,13 +5,13 @@ import numpy as np
 import random
 from torch.utils.data import Dataset
 
-from common.transforms import flip_joints
-from common.transforms import affine_transform
+from common.transforms import flip_skeleton
+from common.transforms import fit_affine_transform
 from common.transforms import get_affine_transform
 
 class JointsDataset(Dataset):
 
-    def __init__(self,stage,config,transforms) -> None:
+    def __init__(self,stage,config,transforms=None) -> None:
         assert stage in ('train', 'valid', 'test')
         super(JointsDataset,self).__init__()
 
@@ -38,10 +38,12 @@ class JointsDataset(Dataset):
         joints = image_data["joints_3d"][:,:2]
         joints_vis = image_data["joints_3d"][:,-1].reshape(-1,1)
         
+        score = image_data["score"] if "score" in image_data else 1
+
         center = image_data["center"]
         scale = image_data["scale"] # w,h
-        score = image_data["score"] if score in image_data else 1
-        rotation = 0
+        rotat = 0
+        flip_ = False
 
         if scale[0] > self.config.MODEL.ASPECT_RATIO * scale[1]:
             scale[1] = scale[0] * 1.0 / self.config.MODEL.ASPECT_RATIO
@@ -50,14 +52,13 @@ class JointsDataset(Dataset):
 
         scale[0] *= (1+self.config.DATA.BASE_EXT)
         scale[1] *= (1+self.config.DATA.BASE_EXT)
-        
         if self.stage == "train":
-            r = np.random.rand() if self.DATA.TRAIN.RAND_EXT else (1.0,1.0)
-            scale[0] *= (1+self.config.DATA.TRAIN.X_EXT * r[0])
-            scale[1] *= (1+self.config.DATA.TRAIN.Y_EXT * r[1])
+            r = np.random.rand(2) if self.config.DATA.RAND_EXT else (1.0,1.0)
+            scale[0] *= (1+self.config.DATA.TRAIN_X_EXT * r[0])
+            scale[1] *= (1+self.config.DATA.TRAIN_Y_EXT * r[1])
         else:
-            scale[0] *= (1+self.config.DATA.EVAL.X_EXT)
-            scale[1] *= (1+self.config.DATA.EVAL.Y_EXT)
+            scale[0] *= (1+self.config.DATA.EVAL_X_EXT)
+            scale[1] *= (1+self.config.DATA.EVAL_Y_EXT)
 
         # augmentation
         if self.stage == 'train':
@@ -69,24 +70,24 @@ class JointsDataset(Dataset):
 
             #     if c_half_body is not None and s_half_body is not None:
             #         center, scale = c_half_body, s_half_body
-            
-            # flip
-            if random.random() <= 0.5:
-                data_numpy = data_numpy[:, ::-1, :]
-                joints, joints_vis = flip_joints(
-                    joints, joints_vis, data_numpy.shape[1], self.flip_pairs)
-                center[0] = data_numpy.shape[1] - center[0] - 1
 
-            # scale & rotation
-            sf = self.config.DATA.SCALE_FACTOR
-            scale *= np.clip(1+np.random.randn()*sf,1-sf,1+sf)
+            # scale
+            if self.config.DATA.AUGM_SCALE and random.random()<self.config.DATA.PROB_SCALE:
+                sf = self.config.DATA.SCALE_FACTOR
+                scale *= np.clip(1+np.random.randn()*sf,1-sf,1+sf)
 
-            if random.random() <= 0.5:
+            # rotat
+            if self.config.DATA.AUGM_ROTAT and random.random()<self.config.DATA.PROB_ROTAT:
                 rf = self.config.DATA.ROTAT_FACTOR
-                rotation = np.clip(np.random.randn()*rf, -rf*2, rf*2)
+                rotat = np.clip(np.random.randn()*rf, -rf*2, rf*2)
+            
+            # flip_
+            if self.config.DATA.AUGM_FLIP and random.random()<self.config.DATA.PROB_FLIP:
+                joints, joints_vis = flip_skeleton(joints,joints_vis,self.flip_pairs)
+                flip_ = True
 
         # ----------
-        trans = get_affine_transform(center, scale, rotation, self.config.MODEL.INPUT_SHAPE)
+        trans = get_affine_transform(center, scale, rotat, flip_, self.config.MODEL.INPUT_SHAPE)
 
         input_image = cv2.warpAffine(
             data_numpy,
@@ -98,21 +99,21 @@ class JointsDataset(Dataset):
             input_image = self.transforms(input_image)
         # ----------
 
-        if self.stage == "train":
+        if self.stage != "test":
             for i in range(self.num_joints):
                 if joints_vis[i, 0] > 0.0:
-                    joints[i, 0:2] = affine_transform(joints[i, 0:2], trans)
+                    joints[i, 0:2] = fit_affine_transform(joints[i, 0:2], trans)
                     if joints[i, 0] < 0 or joints[i, 0] > self.config.MODEL.INPUT_SHAPE[1] - 1 \
                         or joints[i, 1] < 0 or joints[i, 1] > self.config.MODEL.INPUT_SHAPE[0] - 1:
                         joints_vis[i, 0] = 0
 
             num_labels = len(self.config.DATA.GAUSSIAN_KERNELS)
-            labels = np.zeros(num_labels,self.num_joints,*self.config.MODEL.OUTPUT_SHAPE)
+            labels = np.zeros((num_labels,self.num_joints,*self.config.MODEL.OUTPUT_SHAPE))
             for i in range(num_labels):
                 labels[i] = self.generate_joints_heatmap(joints, joints_vis, self.config.DATA.GAUSSIAN_KERNELS[i])
-            return input_image, joints_vis, labels
+            return image_id, input_image, labels, joints, joints_vis
         else:
-            return input_image, score, center, scale, image_id
+            return image_id, input_image, score, center, scale
 
     def generate_joints_heatmap(self,joints,joints_vis,kernel):
         input_shape =  self.config.MODEL.INPUT_SHAPE

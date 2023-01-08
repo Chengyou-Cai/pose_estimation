@@ -20,12 +20,20 @@ def flip_joints(joints, joints_vis, width, matched_pairs):
 
     return joints, joints_vis
 
-def affine_transform(pt, t):
+def flip_skeleton(joints, joints_vis, matched_pairs):
+
+    for pair in matched_pairs:
+        joints[pair[0], :], joints[pair[1], :] = joints[pair[1], :], joints[pair[0], :].copy()
+        joints_vis[pair[0], :], joints_vis[pair[1], :] = joints_vis[pair[1], :], joints_vis[pair[0], :].copy()
+
+    return joints, joints_vis
+
+def fit_affine_transform(pt, t):
     new_pt = np.array([pt[0], pt[1], 1.])
     new_pt = np.dot(t, new_pt)
     return new_pt[:2]
 
-def get_affine_transform(center, scale, rotat, output_size, pixel_std=200):
+def get_affine_transform(center, scale, rotat=0, flip_=False, output_size=None, pixel_std=200):
     if not isinstance(scale, np.ndarray) and not isinstance(scale, list):
         scale = np.array([scale, scale])
     scale_tmp = scale * pixel_std
@@ -47,6 +55,9 @@ def get_affine_transform(center, scale, rotat, output_size, pixel_std=200):
     dst[0, :] = np.array([dst_w * 0.5, dst_h * 0.5]) #
     dst[1, :] = np.array([dst_w * 0.5, dst_h * 0.5]) + dst_dir
     dst[2:, :] = get_3rd_point(dst[0, :], dst[1, :])
+
+    if flip_:
+        dst[:,0] = dst_w - dst[:,0] - 1
 
     trans = cv2.getAffineTransform(np.float32(src), np.float32(dst))
 
