@@ -4,19 +4,19 @@ class BaseConfig():
     def __init__(self) -> None:
         
         self.DEVICE = edict()
-        self.DEVICE._gpus = "0"      # available gpus
-        self.DEVICE.which = "cuda:0" # which gpu used
+        self.DEVICE._GPUS = "0"      # available gpus
+        self.DEVICE.WHICH = "cuda:0" # which gpu used
 
         self.HPARAM = edict()
-        self.HPARAM.rand_seed = 3407 # torch.manual_seed(3407) is all you need
-        self.HPARAM.max_epochs = 100
-        self.HPARAM.batch_size = 128
-        self.HPARAM.num_workers = 0
+        self.HPARAM.RAND_SEED = 3407 # torch.manual_seed(3407) is all you need
+        self.HPARAM.MAX_EPOCHS= 100
+        self.HPARAM.BATCH_SIZE = 128
+        self.HPARAM.NUM_WORKERS = 0
         
-        self.HPARAM.wd = 1e-3 # weight decay
-        self.HPARAM.lr = 1e-3 # learning rate
-        self.HPARAM.lrd = 0.97 # learning rate decay
-        self.HPARAM.clip = 3 # gradient clipping
+        self.HPARAM.WD = 1e-3 # weight decay
+        self.HPARAM.LR = 1e-3 # learning rate
+        self.HPARAM.LRD = 0.97 # learning rate decay
+        self.HPARAM.CLIP = 3 # gradient clipping
 
         self.DATA = edict()
 
