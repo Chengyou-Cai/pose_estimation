@@ -111,7 +111,7 @@ class JointsDataset(Dataset):
             labels = np.zeros((num_labels,self.num_joints,*self.config.MODEL.OUTPUT_SHAPE))
             for i in range(num_labels):
                 labels[i] = self.generate_joints_heatmap(joints, joints_vis, self.config.DATA.GAUSSIAN_KERNELS[i])
-            return image_id, input_image, labels, joints, joints_vis
+            return image_id, input_image, labels, joints_vis
         else:
             return image_id, input_image, score, center, scale
 

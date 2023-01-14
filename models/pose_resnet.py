@@ -3,16 +3,19 @@ import torch.nn as nn
 
 from models.component.resnet import implement as resnet_impl
 
-class PoseResNet():
+class PoseResNet(nn.Module):
 
     def __init__(self,config) -> None:
+        super(PoseResNet,self).__init__()
         self.config = config
 
         self.resnet = resnet_impl(
             num_layers=config.MODEL.NUM_LAYERS,
             pretrained=config.MODEL.PRETRAINED
             )
-                # used for deconv layers
+
+        self.inplanes = self.resnet.inplanes
+        # used for deconv layers
         self.deconv_layers = self._make_deconv_layer(
             config.MODEL.NUM_DECONV_LAYERS,
             config.MODEL.NUM_DECONV_FILTERS,
@@ -21,22 +24,20 @@ class PoseResNet():
 
         self.final_layer = nn.Conv2d(
             in_channels=config.MODEL.NUM_DECONV_FILTERS[-1],
-            out_channels=config.MODEL.NUM_JOINTS,
+            out_channels=config.DATA.NUM_JOINTS,
             kernel_size=config.MODEL.FINAL_CONV_KERNEL,
             stride=1,
             padding=1 if config.MODEL.FINAL_CONV_KERNEL == 3 else 0
         )
 
     def _get_deconv_cfg(self, deconv_kernel):
-        if deconv_kernel == 4:
-            padding = 1
-            output_padding = 0
-        elif deconv_kernel == 3:
-            padding = 1
-            output_padding = 1
-        elif deconv_kernel == 2:
-            padding = 0
-            output_padding = 0
+        # deconv_kernel:(padding,output_padding)
+        deconvs = {
+            4:(1,0),
+            3:(1,1),
+            2:(0,0)
+        }
+        padding, output_padding = deconvs[deconv_kernel]
 
         return deconv_kernel, padding, output_padding
 
@@ -73,3 +74,38 @@ class PoseResNet():
         x = self.final_layer(x)
 
         return x
+
+import torch.optim as optim
+import pytorch_lightning as pl
+from common.core.metric import easy_calc_loss 
+class PoseResNetApi(pl.LightningModule):
+
+    def __init__(self,config) -> None:
+        super(PoseResNetApi,self).__init__()
+
+        self.config = config
+        self._model = PoseResNet(config)
+
+        print(f"{self.__class__.__name__} : loading model")
+
+    def configure_optimizers(self):
+        optimizer = optim.Adam(
+            self._model.parameters(),
+            lr=self.config.HPARAM.LR,
+            weight_decay=self.config.HPARAM.WD
+            )
+        scheduler = optim.lr_scheduler.MultiStepLR(
+            optimizer, 
+            self.config.HPARAM.LR_STEP, 
+            self.config.HPARAM.LR_FACTOR
+            )
+        return {'optimizer':optimizer,'lr_scheduler': scheduler}
+    
+    def training_step(self, batch, batch_idx):
+        image_id, input_image, labels, joints_vis = batch
+
+        preds = self._model(input_image)
+
+        loss = easy_calc_loss(preds,labels,joints_vis)
+
+        return {"loss": loss}

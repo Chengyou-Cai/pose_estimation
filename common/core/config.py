@@ -18,6 +18,11 @@ class BaseConfig():
         self.HPARAM.LRD = 0.97 # learning rate decay
         self.HPARAM.CLIP = 3 # gradient clipping
 
+        self.HPARAM.LR_STEP = [70, 90, 110]
+        self.HPARAM.LR_FACTOR = 0.1
+
+        self.HPARAM.BN_MOMENTUM = 0.1
+
         self.DATA = edict()
 
         self.MODEL = edict()
