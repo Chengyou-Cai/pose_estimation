@@ -22,7 +22,7 @@ class MPIIDataset(JointsDataset):
 
     @property
     def kpgt_anns_file_path(self):
-        return os.path.join(self.config.DATA.ROOT,"annot",f"{self.stage}.json")
+        return os.path.join(self.config.DATA.ROOT,"annots",f"{self.stage}.json")
 
     @staticmethod
     def json2obj(fpath):

@@ -6,14 +6,14 @@ class JointMSELoss(nn.Module):
     def __init__(self) -> None:
         self.criterion = nn.MSELoss()
 
-    def forward(self,preds,label,joints_vis):
-        assert preds.shape == label.shape
+    def forward(self,pred,hmap,joints_vis):
+        assert pred.shape == hmap.shape
 
-        batch_size = preds.size(0)
-        num_joints = preds.size(1)
+        batch_size = pred.size(0)
+        num_joints = pred.size(1)
 
-        heatmaps_preds = preds.reshape((batch_size,num_joints,-1)).split(1,1)
-        heatmaps_label = label.reshape((batch_size,num_joints,-1)).split(1,1)
+        heatmaps_preds = pred.reshape((batch_size,num_joints,-1)).split(1,1) # size,dim
+        heatmaps_label = hmap.reshape((batch_size,num_joints,-1)).split(1,1)
 
         loss = 0
         for idx in range(num_joints):
@@ -26,8 +26,11 @@ class JointMSELoss(nn.Module):
             )
         return loss/num_joints
 
-def easy_calc_loss(preds,labels,joints_vis):
+def easy_calc_loss(pred,labels,joints_vis):
     loss = JointMSELoss()
-    return loss(preds,labels[:,-1,:,:,:],joints_vis)
+    hmap = labels[:,-1,:,:,:]
+    return loss(pred,hmap,joints_vis)
+
+import torchmetrics as metrics
 
 

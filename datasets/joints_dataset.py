@@ -5,9 +5,9 @@ import numpy as np
 import random
 from torch.utils.data import Dataset
 
-from common.transforms import flip_skeleton
-from common.transforms import fit_affine_transform
-from common.transforms import get_affine_transform
+from common.transform import flip_skeleton
+from common.transform import fit_affine_transform
+from common.transform import get_affine_transform
 
 class JointsDataset(Dataset):
 

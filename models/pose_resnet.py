@@ -103,9 +103,20 @@ class PoseResNetApi(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         image_path, center, scale, input_image, labels, joints, joints_vis = batch
+        
+        pred = self._model(input_image)
+        loss = easy_calc_loss(pred,labels,joints_vis)
 
-        preds = self._model(input_image)
-
-        loss = easy_calc_loss(preds,labels,joints_vis)
-
+        self.log_dict({"loss":loss},on_step=False,on_epoch=True,prog_bar=True)
         return {"loss": loss}
+
+    @torch.no_grad()
+    def _shared_eval_step(self,batch,metrics=None):
+        image_path, center, scale, input_image, labels, joints, joints_vis = batch
+        pred = self._model(input_image)
+        perf = metrics(pred,labels,joints_vis)
+        return perf
+
+    def validation_step(self, batch, batch_idx):
+        perf = self._shared_eval_step(batch)
+        self.log_dict(perf,on_step=False,on_epoch=True,prog_bar=True)

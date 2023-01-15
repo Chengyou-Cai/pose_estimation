@@ -76,6 +76,13 @@ def get_3rd_point(a, b):
     direct = a - b
     return b + np.array([-direct[1], direct[0]], dtype=np.float32) # 向量垂直
 
+def inv_affine_transform(coords, center, scale, output_size):
+    target_coords = np.zeros(coords.shape)
+    trans = get_affine_transform(center, scale, 0, output_size, inv=1)
+    for p in range(coords.shape[0]):
+        target_coords[p, 0:2] = fit_affine_transform(coords[p, 0:2], trans)
+    return target_coords
+
 def crop(img, center, scale, output_size, rot=0):
     trans = get_affine_transform(center, scale, rot, output_size)
 
