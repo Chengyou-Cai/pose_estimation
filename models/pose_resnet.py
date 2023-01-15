@@ -102,7 +102,7 @@ class PoseResNetApi(pl.LightningModule):
         return {'optimizer':optimizer,'lr_scheduler': scheduler}
     
     def training_step(self, batch, batch_idx):
-        image_id, input_image, labels, joints_vis = batch
+        image_path, center, scale, input_image, labels, joints, joints_vis = batch
 
         preds = self._model(input_image)
 

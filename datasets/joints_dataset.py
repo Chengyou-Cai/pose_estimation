@@ -29,16 +29,15 @@ class JointsDataset(Dataset):
     def __getitem__(self, idx):
         image_data = copy.deepcopy(self.db[idx])
         
-        image_id = image_data["image_id"]
         image_path = image_data["image_path"]
 
-        data_numpy = cv2.imread(image_path,cv2.IMREAD_COLOR)
-        data_numpy = cv2.cvtColor(data_numpy, cv2.COLOR_BGR2RGB)
+        src_image = cv2.imread(image_path,cv2.IMREAD_COLOR)
+        src_image = cv2.cvtColor(src_image, cv2.COLOR_BGR2RGB)
 
         joints = image_data["joints_3d"][:,:2]
         joints_vis = image_data["joints_3d"][:,-1].reshape(-1,1)
         
-        score = image_data["score"] if "score" in image_data else 1
+        # score = image_data["score"] if "score" in image_data else 1
 
         center = image_data["center"]
         scale = image_data["scale"] # w,h
@@ -90,7 +89,7 @@ class JointsDataset(Dataset):
         trans = get_affine_transform(center, scale, rotat, flip_, self.config.MODEL.INPUT_SHAPE)
 
         input_image = cv2.warpAffine(
-            data_numpy,
+            src_image,
             trans,
             (int(self.config.MODEL.INPUT_SHAPE[1]), int(self.config.MODEL.INPUT_SHAPE[0])),
             flags=cv2.INTER_LINEAR)
@@ -111,9 +110,9 @@ class JointsDataset(Dataset):
             labels = np.zeros((num_labels,self.num_joints,*self.config.MODEL.OUTPUT_SHAPE))
             for i in range(num_labels):
                 labels[i] = self.generate_joints_heatmap(joints, joints_vis, self.config.DATA.GAUSSIAN_KERNELS[i])
-            return image_id, input_image, labels, joints_vis
+            return image_path, center, scale, input_image, labels, joints, joints_vis
         else:
-            return image_id, input_image, score, center, scale
+            return image_path, center, scale, input_image
 
     def generate_joints_heatmap(self,joints,joints_vis,kernel):
         input_shape =  self.config.MODEL.INPUT_SHAPE
@@ -135,7 +134,7 @@ class JointsDataset(Dataset):
                 continue
             heatmaps[i] /= maxi / 255
 
-        return heatmaps 
+        return heatmaps
     
     def _load_db(self):
         raise NotImplementedError

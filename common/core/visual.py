@@ -1,6 +1,48 @@
 import cv2
 import numpy as np
 
+def bbox2cs(bbox,pixel_std=200):
+    x, y, w, h = bbox[:4] # (x,y) upper-left
+
+    center = np.zeros(2, dtype=np.float32)
+    center[0] = x + w / 2.0
+    center[1] = y + h / 2.0
+
+    scale = np.array([w * 1.0 / pixel_std, h * 1.0 / pixel_std],dtype=np.float32)
+
+    return center, scale
+
+def cs2bbox(center,scale,pixel_std=200):
+    x, y = center
+    w, h = scale * pixel_std
+
+    lt = (int(x - w / 2.0), int(y - h / 2.0))
+    rb = (int(x + w / 2.0), int(y + h / 2.0))
+    return np.array(lt),np.array(rb)
+
+def draw_bounding_box(image_path,center=None,scale=None):
+    src_image = cv2.imread(image_path,cv2.IMREAD_COLOR)
+    src_image = cv2.cvtColor(src_image, cv2.COLOR_BGR2RGB)
+    lt, rb = cs2bbox(center,scale)
+
+    cv2.rectangle(src_image, lt, rb, color=(0, 0, 255), thickness=5)
+
+    return src_image
+
+def draw_joints_heatmap(labels,map_size=None):
+
+    label = labels[-1]
+    joints_heatmap = np.zeros((label.shape[1],label.shape[2]),dtype="float32")
+
+    for joint_heatmap in label:
+        r, c = np.nonzero(joint_heatmap)
+        joints_heatmap[r,c] = joint_heatmap[r,c]
+
+    if map_size:
+        joints_heatmap = cv2.resize(joints_heatmap, map_size, interpolation=cv2.INTER_NEAREST)
+    
+    return joints_heatmap
+
 def draw_skeleton(image,joints,joints_vis,skeleton,score=None):
     
     num_joints = len(joints)
