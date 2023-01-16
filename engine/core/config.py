@@ -26,3 +26,6 @@ class BaseConfig():
         self.DATA = edict()
 
         self.MODEL = edict()
+
+    def display_cfgval(self):
+        print(self.__dict__)

@@ -4,10 +4,10 @@ from torch.utils.data import DataLoader
 
 class DataDrive(pl.LightningDataModule):
 
-    def __init__(self,config,splits=None) -> None:
+    def __init__(self,config,_drive=None) -> None:
         super(DataDrive,self).__init__()
         self.config = config
-        self.splits = splits # ?
+        self._drive = _drive # ?
 
     def prepare_data(self) -> None:
         pass
@@ -15,10 +15,10 @@ class DataDrive(pl.LightningDataModule):
     def setup(self, stage="fit") -> None:
         assert (stage == 'fit' or stage == 'test')
         if stage == 'fit':
-            self.train_set = self.splits["train"]
-            self.valid_set = self.splits["valid"]
+            self.train_set = self._drive["train"]
+            self.valid_set = self._drive["valid"]
         elif stage == 'test':
-            self.test_set = self.splits["test"]
+            self.test_set = self._drive["test"]
 
     def train_dataloader(self):
         return DataLoader(

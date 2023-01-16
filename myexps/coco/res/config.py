@@ -1,4 +1,4 @@
-from common.core.config import BaseConfig
+from engine.core.config import BaseConfig
 
 class Config(BaseConfig):
 
@@ -47,3 +47,5 @@ class Config(BaseConfig):
 
         self.MODEL.FINAL_CONV_KERNEL = 1
         self.MODEL.DECONV_WITH_BIAS = False
+
+        self.display_cfgval()

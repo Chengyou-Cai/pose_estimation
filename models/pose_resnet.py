@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 from models.component.resnet import implement as resnet_impl
@@ -74,49 +73,3 @@ class PoseResNet(nn.Module):
         x = self.final_layer(x)
 
         return x
-
-import torch.optim as optim
-import pytorch_lightning as pl
-from common.core.metric import easy_calc_loss 
-class PoseResNetApi(pl.LightningModule):
-
-    def __init__(self,config) -> None:
-        super(PoseResNetApi,self).__init__()
-
-        self.config = config
-        self._model = PoseResNet(config)
-
-        print(f"{self.__class__.__name__} : loading model")
-
-    def configure_optimizers(self):
-        optimizer = optim.Adam(
-            self._model.parameters(),
-            lr=self.config.HPARAM.LR,
-            weight_decay=self.config.HPARAM.WD
-            )
-        scheduler = optim.lr_scheduler.MultiStepLR(
-            optimizer, 
-            self.config.HPARAM.LR_STEP, 
-            self.config.HPARAM.LR_FACTOR
-            )
-        return {'optimizer':optimizer,'lr_scheduler': scheduler}
-    
-    def training_step(self, batch, batch_idx):
-        image_path, center, scale, input_image, labels, joints, joints_vis = batch
-        
-        pred = self._model(input_image)
-        loss = easy_calc_loss(pred,labels,joints_vis)
-
-        self.log_dict({"loss":loss},on_step=False,on_epoch=True,prog_bar=True)
-        return {"loss": loss}
-
-    @torch.no_grad()
-    def _shared_eval_step(self,batch,metrics=None):
-        image_path, center, scale, input_image, labels, joints, joints_vis = batch
-        pred = self._model(input_image)
-        perf = metrics(pred,labels,joints_vis)
-        return perf
-
-    def validation_step(self, batch, batch_idx):
-        perf = self._shared_eval_step(batch)
-        self.log_dict(perf,on_step=False,on_epoch=True,prog_bar=True)

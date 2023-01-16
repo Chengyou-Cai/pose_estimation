@@ -1,4 +1,4 @@
-from common.core.config import BaseConfig
+from engine.core.config import BaseConfig
 
 class Config(BaseConfig):
 
