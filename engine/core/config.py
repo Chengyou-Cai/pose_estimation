@@ -9,8 +9,8 @@ class BaseConfig():
 
         self.HPARAM = edict()
         self.HPARAM.RAND_SEED = 3407 # torch.manual_seed(3407) is all you need
-        self.HPARAM.MAX_EPOCHS= 100
-        self.HPARAM.BATCH_SIZE = 128
+        self.HPARAM.MAX_EPOCHS= 10
+        self.HPARAM.BATCH_SIZE = 64
         self.HPARAM.NUM_WORKERS = 0
         
         self.HPARAM.WD = 1e-3 # weight decay
@@ -28,4 +28,4 @@ class BaseConfig():
         self.MODEL = edict()
 
     def display_cfgval(self):
-        print(self.__dict__)
+        print(f"\n{self.__dict__}\n")

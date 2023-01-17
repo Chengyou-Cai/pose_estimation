@@ -11,13 +11,13 @@ from common.transform import get_affine_transform
 
 class JointsDataset(Dataset):
 
-    def __init__(self,stage,config,transforms=None) -> None:
+    def __init__(self,stage,config,transform=None) -> None:
         assert stage in ('train', 'valid', 'test')
         super(JointsDataset,self).__init__()
 
         self.stage = stage
         self.config = config
-        self.transforms = transforms
+        self.transform = transform
 
         self.db = None
         self.num_joints = None
@@ -94,8 +94,8 @@ class JointsDataset(Dataset):
             (int(self.config.MODEL.INPUT_SHAPE[1]), int(self.config.MODEL.INPUT_SHAPE[0])),
             flags=cv2.INTER_LINEAR)
 
-        if self.transforms:
-            input_image = self.transforms(input_image)
+        if self.transform:
+            input_image = self.transform(input_image)
         # ----------
 
         if self.stage != "test":

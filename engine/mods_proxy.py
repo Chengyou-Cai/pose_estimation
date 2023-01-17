@@ -1,11 +1,11 @@
 import pytorch_lightning as pl
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torchmetrics import MetricCollection
 
 from engine.core.metric import PCKm, easy_calc_loss
 from models.pose_resnet import PoseResNet
-
 
 class ModsProxy(pl.LightningModule):
 
@@ -16,11 +16,11 @@ class ModsProxy(pl.LightningModule):
         ],prefix=prefix)
         return metrics
 
-    def __init__(self,config,_model=PoseResNet) -> None:
+    def __init__(self,config,_proxy=PoseResNet) -> None:
         super(ModsProxy,self).__init__()
 
         self.config = config
-        self._model = _model(config)
+        self._model = _proxy(config)
 
         self.train_metrics = self.get_metrics(prefix="train_")
         self.valid_metrics = self.get_metrics(prefix="valid_")
@@ -45,7 +45,7 @@ class ModsProxy(pl.LightningModule):
         image_path, center, scale, input_image, labels, joints, joints_vis = batch
         
         pred = self._model(input_image)
-        loss = easy_calc_loss(pred,labels,joints_vis)
+        loss = easy_calc_loss(pred.float(),labels.float(),joints_vis.float())
         perf = self.train_metrics(pred,labels[:,-1,:,:,:])
         
         self.log_dict(perf,on_step=False,on_epoch=True,prog_bar=True)

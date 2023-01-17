@@ -30,8 +30,8 @@ class MPIIDataset(JointsDataset):
             obj = json.load(json_file)
         return obj
 
-    def __init__(self, stage, config, transforms=None) -> None:
-        super(MPIIDataset,self).__init__(stage, config, transforms)
+    def __init__(self, stage, config, transform=None) -> None:
+        super(MPIIDataset,self).__init__(stage, config, transform)
 
         self.anns = self.json2obj(self.kpgt_anns_file_path)
 

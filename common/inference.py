@@ -4,8 +4,8 @@ def get_maxv_coord(batch_heatmaps, batch_size, num_joints, heatmap_w):
 
     batch_heatmaps_ = batch_heatmaps.reshape((batch_size, num_joints, -1))
     
-    batch_idxs = np.argmax(batch_heatmaps_, 2)
-    batch_maxv = np.amax(batch_heatmaps_, 2)
+    batch_idxs = np.argmax(batch_heatmaps_.detach().cpu().numpy(), 2)
+    batch_maxv = np.amax(batch_heatmaps_.detach().cpu().numpy(), 2)
 
     batch_idxs = batch_idxs.reshape((batch_size, num_joints, 1))
     batch_maxv = batch_maxv.reshape((batch_size, num_joints, 1))

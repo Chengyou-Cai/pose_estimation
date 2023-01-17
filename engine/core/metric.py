@@ -4,6 +4,7 @@ import torch.nn as nn
 class JointMSELoss(nn.Module):
 
     def __init__(self) -> None:
+        super(JointMSELoss,self).__init__()
         self.criterion = nn.MSELoss()
 
     def forward(self,pred,hmap,joints_vis):
@@ -89,11 +90,11 @@ class PCKm(Metric):
         coord_label, _ = get_maxv_coord(label,batch_size,num_joints,heatmap_w)
 
         norm = np.ones((batch_size, 2)) * np.array([heatmap_h, heatmap_w]) / 10
-        self.distance = self.calc_dist(coord_preds,coord_label,norm)
+        self.distance = torch.tensor(self.calc_dist(coord_preds,coord_label,norm))
 
     def compute(self):
-        trans_distance = np.transpose(self.distance)
-        pck_joints, pck_mean = self.calc_pck(
+        trans_distance = torch.transpose(self.distance,0,1)
+        pck_mean = self.calc_pck(
             dists=trans_distance,threshold=self.threshold
             )
         return pck_mean

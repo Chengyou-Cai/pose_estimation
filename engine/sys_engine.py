@@ -10,24 +10,27 @@ def set_environ(config):
     pl.seed_everything(config.HPARAM.RAND_SEED)
 
 
-class NetEngine():
+class SysEngine():
 
-    def __init__(self,config,mods_proxy,data_drive,monitor) -> None:
-        super(NetEngine,self).__init__()
+    def __init__(self,config,mods_proxy,data_drive,monitor="valid_PCKm") -> None:
+        super(SysEngine,self).__init__()
         
         self.config = config
         self.mods_proxy = mods_proxy
         self.data_drive = data_drive
 
-        self.logger = TensorBoardLogger(save_dir="./_logs/",name=mods_proxy._model._get_name()[:-3])
+        self.logger = TensorBoardLogger(
+            save_dir=f"./_logs/",
+            name=mods_proxy._model._get_name()
+            )
         self.model_ckpt = ModelCheckpoint(
             mode="min",
             save_top_k=3,
             save_last=True,
             monitor=monitor,
-            dirpath=f"./_ckpt/{mods_proxy._model._get_name()[:-3]}/",
+            dirpath=f"./_ckpt/{mods_proxy._model._get_name()}/",
             filename=f"{{epoch:02d}}_{{{monitor}:.2f}}"
-        )
+            )
         self.trainer = pl.Trainer(
             accelerator="gpu",
             devices=1,

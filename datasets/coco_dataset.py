@@ -55,8 +55,8 @@ class COCODataset(JointsDataset):
 
         return center, scale
 
-    def __init__(self, stage, config, transforms=None) -> None:
-        super(COCODataset,self).__init__(stage, config, transforms)
+    def __init__(self, stage, config, transform=None) -> None:
+        super(COCODataset,self).__init__(stage, config, transform)
 
         self.coco = COCO(self.kpgt_anns_file_path)
         
