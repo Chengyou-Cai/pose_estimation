@@ -12,7 +12,7 @@ def set_environ(config):
 
 class SysEngine():
 
-    def __init__(self,config,mods_proxy,data_drive,monitor="valid_PCKm") -> None:
+    def __init__(self,config,mods_proxy,data_drive,monitor="valid_PCKm",mode="max") -> None:
         super(SysEngine,self).__init__()
         
         self.config = config
@@ -24,7 +24,7 @@ class SysEngine():
             name=mods_proxy._model._get_name()
             )
         self.model_ckpt = ModelCheckpoint(
-            mode="min",
+            mode=mode,
             save_top_k=3,
             save_last=True,
             monitor=monitor,
