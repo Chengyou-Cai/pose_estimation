@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchmetrics import MetricCollection
 
-from engine.core.metric import PCKm, easy_calc_loss
+from common.core.metric import PCKm, easy_calc_loss
 from models.pose_resnet import PoseResNet
 
 class ModsProxy(pl.LightningModule):
